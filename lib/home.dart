@@ -1,5 +1,6 @@
 import 'package:arcitechappassignment/hive/Todo.dart';
 import 'package:arcitechappassignment/view.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:get/get.dart';
@@ -9,6 +10,7 @@ import 'package:intl/intl.dart';
 
 import 'add.dart';
 import 'functions/Tododatabox.dart';
+import 'sections/tasklist.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -17,111 +19,92 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   Tododatabox dataBox = Tododatabox();
+  late TabController _tabController;
   Box<Todo> box = Hive.box('tododata');
+  List<Widget> myTabs = [
+    const Tab(
+      text: 'Pending',
+    ),
+    const Tab(
+      text: 'Completed',
+    ),
+  ];
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: myTabs.length, vsync: this);
+    _tabController.animateTo(0);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Arcitech App Assignment'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () {
-              Get.to(const AddNote());
-            },
-          ),
-        ],
+    return GetMaterialApp(
+      themeMode: Get.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: Column(
-        children: <Widget>[
-          Expanded(
-            child: ValueListenableBuilder(
-              valueListenable: dataBox.box.listenable(),
-              builder: (context, Box<Todo> usersdata, widget) {
-                List<Todo> usersDataFromBox = usersdata.values.toList();
+      darkTheme: ThemeData.dark().copyWith(
+        appBarTheme: const AppBarTheme(color: Colors.black),
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+        iconTheme: const IconThemeData(color: Colors.black),
+        listTileTheme: const ListTileThemeData(
+          iconColor: Colors.black,
+          selectedColor: Colors.black,
+          selectedTileColor: Colors.black,
+          textColor: Colors.black,
+        ),
+      ),
+      title: 'Arcitech App Assignment',
+      home: DefaultTabController(
+        length: 2,
+        child: Scaffold(
+          appBar: AppBar(
+            title: const Text('Arcitech App Assignment'),
+            actions: [
+              IconButton(
+                icon: Get.isDarkMode
+                    ? const Icon(Icons.light_mode)
+                    : const Icon(Icons.dark_mode),
+                onPressed: () {
+                  changeTheme();
 
-                List<Todo> usersDataList = usersDataFromBox.reversed.toList();
-
-                if (usersDataList.isNotEmpty) {
-                  return ListView.builder(
-                    padding: const EdgeInsets.all(4.0),
-                    itemCount: usersDataList.length,
-                    itemBuilder: (context, index) {
-                      var data = usersDataList[index];
-                      DateFormat dateFormat = DateFormat("dd-MM-yyyy ");
-                      DateTime dateTime = dateFormat.parse(data.date);
-                      String dateToString = dateFormat.format(dateTime);
-                      return Container(
-                          margin: const EdgeInsets.only(bottom: 20.00),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.5),
-                                spreadRadius: 5,
-                                blurRadius: 7,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: ListTile(
-                            title: Text(
-                              data.task,
-                            ),
-                            subtitle: Text(dateToString),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit),
-                                  onPressed: () {},
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.remove_red_eye),
-                                  onPressed: () {
-                                    Get.to(ViewTodo(
-                                      data: data,
-                                    ));
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete,
-                                      color: Colors.red),
-                                  onPressed: () {
-                                    var res = dataBox.deletetUserData(data.key);
-                                    if (res) {
-                                      Get.snackbar('Success',
-                                          'Data Deleted Successfully',
-                                          snackPosition: SnackPosition.BOTTOM,
-                                          backgroundColor: Colors.green,
-                                          colorText: Colors.white);
-                                    } else {
-                                      Get.snackbar('Error',
-                                          'Data Not Deleted Successfully',
-                                          snackPosition: SnackPosition.BOTTOM,
-                                          backgroundColor: Colors.red,
-                                          colorText: Colors.white);
-                                    }
-                                  },
-                                ),
-                              ],
-                            ),
-                          ));
-                    },
-                  );
-                } else {
-                  return const Center(child: Text('No Data'));
-                }
-              },
+                  setState(() {});
+                },
+              ),
+            ],
+            bottom: TabBar(
+              tabs: myTabs,
             ),
           ),
-        ],
+          body: TabBarView(
+            physics: const BouncingScrollPhysics(),
+            dragStartBehavior: DragStartBehavior.down,
+            children: <Widget>[
+              Container(
+                child: getTaskList(false),
+              ),
+              Container(
+                child: getTaskList(true),
+              ),
+            ],
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () {
+              Get.to(() => const AddTask());
+            },
+            tooltip: 'Add Task',
+            child: const Icon(Icons.add),
+          ),
+        ),
       ),
     );
   }
 
-  doNothing() {}
+  changeTheme() {
+    Get.changeThemeMode(Get.isDarkMode ? ThemeMode.light : ThemeMode.dark);
+  }
 }

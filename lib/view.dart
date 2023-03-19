@@ -28,6 +28,10 @@ class _ViewTodoState extends State<ViewTodo> {
             height: 200,
             child: PhotoView(
               imageProvider: Image.file(File(widget.data!.img)).image,
+              backgroundDecoration: const BoxDecoration(
+                color: Colors.white,
+              ),
+              maxScale: PhotoViewComputedScale.covered * 0.2,
             ),
           ),
           const SizedBox(

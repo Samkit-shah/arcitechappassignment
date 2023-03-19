@@ -7,18 +7,19 @@ import 'package:arcitechappassignment/hive/Todo.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'home.dart';
 
-class AddNote extends StatefulWidget {
-  const AddNote({super.key});
+class AddTask extends StatefulWidget {
+  const AddTask({super.key});
 
   @override
-  State<AddNote> createState() => _AddNoteState();
+  State<AddTask> createState() => _AddTaskState();
 }
 
-class _AddNoteState extends State<AddNote> {
+class _AddTaskState extends State<AddTask> {
   File _image = File('');
   final picker = ImagePicker();
 
@@ -39,10 +40,15 @@ class _AddNoteState extends State<AddNote> {
   }
 
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add Note'),
+        title: const Text('Add Task'),
       ),
       body: Column(
         children: [
@@ -90,20 +96,23 @@ class _AddNoteState extends State<AddNote> {
                           //     '${DateTime.now().millisecondsSinceEpoch}.png';
                           final imgRandomName =
                               '${DateTime.now().millisecondsSinceEpoch}.png';
+
+                          print(DateTime.now().toString());
                           _image.copy('$path/$imgRandomName').then((newPath) {
-                            print(newPath.path);
                             Todo data = Todo(
                               task: taskController.text,
                               img: newPath.path,
-                              date: DateTime.now().toString(),
+                              date: DateFormat('dd/MM/yyyy')
+                                  .format(DateTime.now())
+                                  .toString(),
                             );
-                            dataBox.insertUserData(data);
+                            dataBox.insertData(data);
                             Get.snackbar('Success', 'Data Added Successfully',
                                 snackPosition: SnackPosition.BOTTOM,
                                 backgroundColor: Colors.green,
                                 colorText: Colors.white);
 
-                            Get.offAll(const MyHomePage());
+                            Navigator.of(context).pop();
                           });
                         },
                       );
